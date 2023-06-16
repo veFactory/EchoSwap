@@ -1,0 +1,21 @@
+npx hardhat run D:\Projects\Solidity\THENA-Contracts-v1\scripts\V1\deployThena.js --network ftmt
+
+Deploying Contract...
+thena Address:  0xA14A62cEB1a31d0C0D3052536e804CA215dc71A1
+veArtProxy Address:  0xBa4Ad6f040AB9ba04036f56426031089c40C3fa5
+veThena Address:  0x0B3FCBCC3586e894AE79EB64357ECb5E7a1F38AA
+RewardsDistributor Address:  0xF42700636b7BAE3Ad5fa35992831DAFb60351223
+
+
+npx hardhat run D:\Projects\Solidity\THENA-Contracts-v1\scripts\V1\deployFactories.js --network ftmt
+
+pairFactory:  0x3767925F4093558300C160bdF098EF75a23F0701
+
+
+npx hardhat run D:\Projects\Solidity\THENA-Contracts\scripts\V2\deploy.js --network ftmt
+Deploying Contracts...
+PermissionsRegistry:  0x7de9593D9Bd141fA9a3CBe5D76C35f8Bc02faEE9
+BribeFactoryV3:  0x400Feb9Cda6FbCbf60a8d0769D79f19FaDbBe59C
+GaugeFactoryV2:  0x859085EBD8dbd9Ca4415Aa3E29782dE4F3e492B4
+GaugeFactoryV2_CL:  0xb10F63d1cF750A3c1fdbCaBde45d2EDF87E4692B
+VoterV3:  0x76c815fd2513eec806B81754517518e1D2520b45
