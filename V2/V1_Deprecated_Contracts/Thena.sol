@@ -5,8 +5,8 @@ import "./interfaces/IThena.sol";
 
 contract Thena is IThena {
 
-    string public constant name = "THENA";
-    string public constant symbol = "THE";
+    string public constant name = "ECHOSWAP";
+    string public constant symbol = "ECHO";
     uint8 public constant decimals = 18;
     uint public totalSupply = 0;
 
@@ -33,11 +33,12 @@ contract Thena is IThena {
     }
 
 
-    // Initial mint: total 50M    
+    // Initial mint: total 200M    
+    // TODO: initialMint the tokens (cap 200M)
     function initialMint(address _recipient) external {
         require(msg.sender == minter && !initialMinted);
         initialMinted = true;
-        _mint(_recipient, 50 * 1e6 * 1e18);
+        _mint(_recipient, 200 * 1e6 * 1e18);
     }
 
     function approve(address _spender, uint _value) external returns (bool) {

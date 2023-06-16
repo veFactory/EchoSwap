@@ -24,6 +24,7 @@ contract Thenian is ERC721Enumerable, Ownable {
     uint256 public MAX_RESERVE = 150;
     uint256 public reservedAmount;
     bytes32 public root;
+    // TODO:Change the multiSig wallet
     address public multiSig = 0x7d70ee3774325C51e021Af1f7987C214d2CAA184;
 
     mapping(address => bool) public firstMint;
@@ -34,7 +35,7 @@ contract Thenian is ERC721Enumerable, Ownable {
         uint256 _maxSupply,
         uint256 _nftPrice,
         uint256 _startTimestamp
-    ) ERC721("Thenian", "theNFT") {
+    ) ERC721("EchoHolders", "EchoNFT") {
         MAX_SUPPLY = _maxSupply;
         NFT_PRICE = _nftPrice;
         SALE_START_TIMESTAMP = _startTimestamp;
