@@ -35,8 +35,8 @@ contract PairFactory is IPairFactory {
         pauser = msg.sender;
         isPaused = false;
         feeManager = msg.sender;
-        stableFee = 4; // 0.04%
-        volatileFee = 18; // 0.18%
+        stableFee = 5; // 0.04%
+        volatileFee = 10; // 0.18%
         stakingNFTFee = 3000; // 30% of stable/volatileFee
     }
 
