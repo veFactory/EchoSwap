@@ -11,7 +11,7 @@ import "./interfaces/IWETH.sol";
 
 import 'hardhat/console.sol';
 
-interface IThenian {
+interface EchoHolders {
     function originalMinters(address) external view returns(uint);
     function totalSupply() external view returns(uint);
     function reservedAmount() external view returns(uint);
@@ -27,7 +27,7 @@ contract Royalties is ReentrancyGuard {
 
     uint256 public epoch;
 
-    IThenian public thenian;
+    EchoHolders public echoholders;
     address public owner;
 
     mapping(uint => uint) public feesPerEpoch;
@@ -49,10 +49,10 @@ contract Royalties is ReentrancyGuard {
     event Deposit(uint256 amount);
     event VestingUpdate(uint256 balance, uint256 vesting_period, uint256 tokenPerSec);
 
-    constructor(address _wbnb, address _thenian) {
+    constructor(address _wbnb, address _echoholders) {
         owner = msg.sender;
         wbnb = IERC20(_wbnb);
-        thenian = IThenian(_thenian);
+        echoholders = IEchoHolders(_echoholders);
         epoch = 0;
     }
 
@@ -70,8 +70,8 @@ contract Royalties is ReentrancyGuard {
         }
 
         feesPerEpoch[epoch] = _amount;
-        totalSupply[epoch] = thenian.totalSupply();
-        reservedAmounts[epoch] = thenian.reservedAmount();
+        totalSupply[epoch] = echoholders.totalSupply();
+        reservedAmounts[epoch] = echoholders.reservedAmount();
         epoch++;
     }
 
@@ -101,7 +101,7 @@ contract Royalties is ReentrancyGuard {
 
     function claimable(address user) public view returns(uint) {
         require(user != address(0));
-        //Total fees * Thenian.originalMinters[msg.sender] / (Thenian.totalSupply - Thenian.reservedAmount)
+        //Total fees * EchoHolders.originalMinters[msg.sender] / (EchoHolders.totalSupply - EchoHolders.reservedAmount)
         uint256 cp = userCheckpoint[user];
         if(cp >= epoch){
             return 0;
@@ -113,7 +113,7 @@ contract Royalties is ReentrancyGuard {
             uint256 _resAmnt = reservedAmounts[i];
             uint256 _tot = totalSupply[i];
             uint256 _fee = feesPerEpoch[i]; 
-            uint256 weight = thenian.originalMinters(user);
+            uint256 weight = echoholders.originalMinters(user);
             _reward += _fee * weight / (_tot - _resAmnt);
         }  
         return _reward;

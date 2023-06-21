@@ -4,7 +4,7 @@ pragma solidity 0.8.13;
 import "./libraries/Math.sol";
 import "./interfaces/IMinter.sol";
 import "./interfaces/IRewardsDistributor.sol";
-import "./interfaces/IThena.sol";
+import "./interfaces/IEcho.sol";
 import "./interfaces/IVoter.sol";
 import "./interfaces/IVotingEscrow.sol";
 
@@ -25,7 +25,7 @@ contract Minter is IMinter {
 
     uint internal constant WEEK = 86400 * 7; // allows minting once per week (reset every Thursday 00:00 UTC)
     // TODO: weekly emission is 10M
-    uint public weekly = 10_000_000 * 1e18; // represents a starting weekly emission of 2.6M THENA (THENA has 18 decimals)
+    uint public weekly = 10_000_000 * 1e18; // represents a starting weekly emission of 2.6M Echo (Echo has 18 decimals)
     uint public active_period;
     uint internal constant LOCK = 86400 * 7 * 52 * 2;
 
@@ -33,7 +33,7 @@ contract Minter is IMinter {
     address public team;
     address public pendingTeam;
     
-    IThena public immutable _thena;
+    IEcho public immutable _echo;
     IVoter public _voter;
     IVotingEscrow public immutable _ve;
     IRewardsDistributor public immutable _rewards_distributor;
@@ -49,7 +49,7 @@ contract Minter is IMinter {
         team = msg.sender;
         // TODO: Team rate is 5% and will be decreased in the future to 3%
         teamRate = 50; // 300 bps = 5%
-        _thena = IThena(IVotingEscrow(__ve).token());
+        _echo = IEcho(IVotingEscrow(__ve).token());
         _voter = IVoter(__voter);
         _ve = IVotingEscrow(__ve);
         _rewards_distributor = IRewardsDistributor(__rewards_distributor);
@@ -64,8 +64,8 @@ contract Minter is IMinter {
     ) external {
         require(initializer == msg.sender);
         if(max > 0){
-            _thena.mint(address(this), max);
-            _thena.approve(address(_ve), type(uint).max);
+            _echo.mint(address(this), max);
+            _echo.approve(address(_ve), type(uint).max);
             for (uint i = 0; i < claimants.length; i++) {
                 _ve.create_lock_for(amounts[i], LOCK, claimants[i]);
             }
@@ -112,7 +112,7 @@ contract Minter is IMinter {
 
     // calculate circulating supply as total token supply - locked supply
     function circulating_supply() public view returns (uint) {
-        return _thena.totalSupply() - _ve.supply();
+        return _echo.totalSupply() - _ve.supply();
     }
 
     // emission calculation is 1% of available supply to mint adjusted by circulating / total supply
@@ -140,9 +140,9 @@ contract Minter is IMinter {
     function calculate_rebase(uint _weeklyMint) public view returns (uint) {
         // TODO: Rebase is 30%
         uint _veTotal = _ve.supply();
-        uint _thenaTotal = _thena.totalSupply();
+        uint _echoTotal = _echo.totalSupply();
         
-        uint lockedShare = (_veTotal) * PRECISION  / _thenaTotal;
+        uint lockedShare = (_veTotal) * PRECISION  / _echoTotal;
         if(lockedShare >= REBASEMAX){
             return _weeklyMint * REBASEMAX / PRECISION;
         } else {
@@ -170,18 +170,18 @@ contract Minter is IMinter {
 
             uint _voterAmount = weekly - _rebase - _teamEmissions;
 
-            uint _balanceOf = _thena.balanceOf(address(this));
+            uint _balanceOf = _echo.balanceOf(address(this));
             if (_balanceOf < _required) {
-                _thena.mint(address(this), _required - _balanceOf);
+                _echo.mint(address(this), _required - _balanceOf);
             }
 
-            require(_thena.transfer(team, _teamEmissions));
+            require(_echo.transfer(team, _teamEmissions));
             
-            require(_thena.transfer(address(_rewards_distributor), _rebase));
+            require(_echo.transfer(address(_rewards_distributor), _rebase));
             _rewards_distributor.checkpoint_token(); // checkpoint token balance that was just minted in rewards distributor
             _rewards_distributor.checkpoint_total_supply(); // checkpoint supply
 
-            _thena.approve(address(_voter), _voterAmount);
+            _echo.approve(address(_voter), _voterAmount);
             _voter.notifyRewardAmount(_voterAmount);
 
             emit Mint(msg.sender, weekly, circulating_supply(), circulating_emission());

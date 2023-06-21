@@ -8,10 +8,10 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 /**
- * @title Thenian contract
+ * @title EchoHolders contract
  * @dev Extends ERC721 Non-Fungible Token Standard basic implementation
  */
-contract Thenian is ERC721Enumerable, Ownable {
+contract EchoHolders is ERC721Enumerable, Ownable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 

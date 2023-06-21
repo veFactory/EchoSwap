@@ -1,9 +1,9 @@
-npx hardhat run D:\Projects\Solidity\THENA-Contracts-v1\scripts\V1\deployThena.js --network ftmt
+npx hardhat run D:\Projects\Solidity\THENA-Contracts-v1\scripts\V1\deployEcho.js --network ftmt
 
 Deploying Contract...
-thena Address:  0xA14A62cEB1a31d0C0D3052536e804CA215dc71A1
+echo Address:  0xA14A62cEB1a31d0C0D3052536e804CA215dc71A1
 veArtProxy Address:  0xBa4Ad6f040AB9ba04036f56426031089c40C3fa5
-veThena Address:  0x0B3FCBCC3586e894AE79EB64357ECb5E7a1F38AA
+veEcho Address:  0x0B3FCBCC3586e894AE79EB64357ECb5E7a1F38AA
 RewardsDistributor Address:  0xF42700636b7BAE3Ad5fa35992831DAFb60351223
 
 

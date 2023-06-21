@@ -815,7 +815,7 @@ abstract contract L2GovernorVotesQuorumFraction is L2GovernorVotes {
     }
 }
 
-contract ThenaGovernor is L2Governor, L2GovernorCountingSimple, L2GovernorVotes,  L2GovernorVotesQuorumFraction {
+contract EchoGovernor is L2Governor, L2GovernorCountingSimple, L2GovernorVotes,  L2GovernorVotesQuorumFraction {
     address public team;
     uint256 public constant MAX_PROPOSAL_NUMERATOR = 50; // max 5%
     uint256 public constant PROPOSAL_DENOMINATOR = 1000;

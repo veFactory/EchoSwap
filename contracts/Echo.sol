@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity 0.8.13;
 
-import "./interfaces/IThena.sol";
+import "./interfaces/IEcho.sol";
 
-contract Thena is IThena {
+contract Echo is IEcho {
     string public constant name = "ECHOSWAP";
     string public constant symbol = "ECHO";
     uint8 public constant decimals = 18;

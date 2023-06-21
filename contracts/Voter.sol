@@ -225,7 +225,7 @@ contract Voter is IVoter {
             }
         }
 
-        if (msg.sender != governor) { // gov can create for any pool, even non-Thena pairs
+        if (msg.sender != governor) { // gov can create for any pool, even non-Echo pairs
             require(isPair, "!_pool");
             require(isWhitelisted[tokenA] && isWhitelisted[tokenB], "!whitelisted");
         }

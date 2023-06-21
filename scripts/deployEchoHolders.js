@@ -5,13 +5,13 @@ async function main() {
 
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
-  const ThenianContract = await ethers.getContractFactory("Thenian");
-  const Thenian = await ThenianContract.deploy(3000, '2000000000000000000', 1669993200);
+  const EchoHoldersContract = await ethers.getContractFactory("EchoHolders");
+  const EchoHolders = await EchoHoldersContract.deploy(3000, '2000000000000000000', 1669993200);
 
   // Wait for this transaction to be mined
-  await Thenian.deployed();
+  await EchoHolders.deployed();
 
-  console.log("Thenian address:", Thenian.address);
+  console.log("EchoHolders address:", EchoHolders.address);
 }
 
 main()

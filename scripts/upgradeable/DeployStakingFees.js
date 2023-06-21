@@ -10,7 +10,7 @@ async function main () {
 
 
     
-  const thenian = ethers.utils.getAddress("0x2Af749593978CB79Ed11B9959cD82FD128BA4f8d")
+  const EchoHolders = ethers.utils.getAddress("0x2Af749593978CB79Ed11B9959cD82FD128BA4f8d")
   const wbnb  = ethers.utils.getAddress("0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c")
 
   console.log('Deploying Contract...');
@@ -21,7 +21,7 @@ async function main () {
   console.log("StakingNFTConverter: ", StakingNFTConverter.address)
 
   data = await ethers.getContractFactory("Masterchef");
-  Masterchef = await data.deploy(wbnb, thenian);
+  Masterchef = await data.deploy(wbnb, EchoHolders);
   txDeployed = await Masterchef.deployed();
   console.log("Masterchef: ", Masterchef.address)
 

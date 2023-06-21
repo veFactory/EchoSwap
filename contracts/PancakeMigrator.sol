@@ -32,7 +32,7 @@ contract PancakeMigrator is ReentrancyGuard {
 
 
     /*
-        @dev migrate univ2 LP to Thena
+        @dev migrate univ2 LP to ECHO
         @param _lp      lp to migrate
         @param stable   boolean to create/add to a (non)stable pair. True = stable
     */
