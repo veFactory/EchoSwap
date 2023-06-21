@@ -127,8 +127,8 @@ contract VotingEscrow is IERC721, IERC721Metadata, IVotes {
                              METADATA STORAGE
     //////////////////////////////////////////////////////////////*/
 
-    string constant public name = "veThena";
-    string constant public symbol = "veTHE";
+    string constant public name = "veECHOSWAP";
+    string constant public symbol = "veECHO";
     string constant public version = "1.0.0";
     uint8 constant public decimals = 18;
 
@@ -522,6 +522,7 @@ contract VotingEscrow is IERC721, IERC721Metadata, IVotes {
 
     uint internal constant WEEK = 1 weeks;
     uint internal constant MAXTIME = 2 * 365 * 86400;
+    // TODO: lock diration is 2 years
     int128 internal constant iMAXTIME = 2 * 365 * 86400;
     uint internal constant MULTIPLIER = 1 ether;
 

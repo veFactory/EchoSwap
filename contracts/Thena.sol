@@ -4,7 +4,6 @@ pragma solidity 0.8.13;
 import "./interfaces/IThena.sol";
 
 contract Thena is IThena {
-
     string public constant name = "ECHOSWAP";
     string public constant symbol = "ECHO";
     uint8 public constant decimals = 18;
@@ -27,13 +26,13 @@ contract Thena is IThena {
     }
 
     // No checks as its meant to be once off to set minting rights to BaseV1 Minter
+    // TODO: You should give access to Minter.sol for further automatic ECHOSWAP mints
     function setMinter(address _minter) external {
         require(msg.sender == minter);
         minter = _minter;
     }
 
-
-    // Initial mint: total 200M    
+  
     // TODO: initialMint the tokens (cap 200M)
     function initialMint(address _recipient) external {
         require(msg.sender == minter && !initialMinted);

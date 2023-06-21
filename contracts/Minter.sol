@@ -8,73 +8,61 @@ import "./interfaces/IThena.sol";
 import "./interfaces/IVoter.sol";
 import "./interfaces/IVotingEscrow.sol";
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 // codifies the minting rules as per ve(3,3), abstracted from the token to support any token that allows minting
 
-contract MinterUpgradeable is IMinter, OwnableUpgradeable {
+contract Minter is IMinter {
     
     bool public isFirstMint;
 
-    uint public EMISSION;
-    uint public TAIL_EMISSION;
-    uint public REBASEMAX;
-    uint public constant PRECISION = 1000;
+    uint internal EMISSION = 990;
+    // TODO: Emission decay is 1% or 990/1000 or 99% of total weekly distribution
+    uint internal constant TAIL_EMISSION = 2;
+    uint internal REBASEMAX = 300;
+    uint internal constant PRECISION = 1000;
     uint public teamRate;
     uint public constant MAX_TEAM_RATE = 50; // 5%
 
-    uint public constant WEEK = 86400 * 7; // allows minting once per week (reset every Thursday 00:00 UTC)
-    uint public weekly; // represents a starting weekly emission of 2.6M THENA (THENA has 18 decimals)
+    uint internal constant WEEK = 86400 * 7; // allows minting once per week (reset every Thursday 00:00 UTC)
+    // TODO: weekly emission is 10M
+    uint public weekly = 10_000_000 * 1e18; // represents a starting weekly emission of 2.6M THENA (THENA has 18 decimals)
     uint public active_period;
-    uint public constant LOCK = 86400 * 7 * 52 * 2;
+    uint internal constant LOCK = 86400 * 7 * 52 * 2;
 
-    address internal _initializer;
+    address internal initializer;
     address public team;
     address public pendingTeam;
     
-    IThena public _thena;
+    IThena public immutable _thena;
     IVoter public _voter;
-    IVotingEscrow public _ve;
-    IRewardsDistributor public _rewards_distributor;
+    IVotingEscrow public immutable _ve;
+    IRewardsDistributor public immutable _rewards_distributor;
 
     event Mint(address indexed sender, uint weekly, uint circulating_supply, uint circulating_emission);
 
-    constructor() {}
-
-    function initialize(    
+    constructor(
         address __voter, // the voting & distribution system
         address __ve, // the ve(3,3) system that will be locked into
         address __rewards_distributor // the distribution system that ensures users aren't diluted
-    ) initializer public {
-        __Ownable_init();
-
-        _initializer = msg.sender;
+    ) {
+        initializer = msg.sender;
         team = msg.sender;
-
-        teamRate = 40; // 300 bps = 3%
-
-        EMISSION = 990;
-        TAIL_EMISSION = 2;
-        REBASEMAX = 300;
-
+        // TODO: Team rate is 5% and will be decreased in the future to 3%
+        teamRate = 50; // 300 bps = 5%
         _thena = IThena(IVotingEscrow(__ve).token());
         _voter = IVoter(__voter);
         _ve = IVotingEscrow(__ve);
         _rewards_distributor = IRewardsDistributor(__rewards_distributor);
-
-
         active_period = ((block.timestamp + (2 * WEEK)) / WEEK) * WEEK;
-        weekly = 2_600_000 * 1e18; // represents a starting weekly emission of 2.6M THENA (THENA has 18 decimals)
         isFirstMint = true;
-
     }
 
-    function _initialize(
+    function initialize(
         address[] memory claimants,
         uint[] memory amounts,
         uint max // sum amounts / max = % ownership of top protocols, so if initial 20m is distributed, and target is 25% protocol ownership, then max - 4 x 20m = 80m
     ) external {
-        require(_initializer == msg.sender);
+        require(initializer == msg.sender);
         if(max > 0){
             _thena.mint(address(this), max);
             _thena.approve(address(_ve), type(uint).max);
@@ -83,7 +71,7 @@ contract MinterUpgradeable is IMinter, OwnableUpgradeable {
             }
         }
 
-        _initializer = address(0);
+        initializer = address(0);
         active_period = ((block.timestamp) / WEEK) * WEEK; // allow minter.update_period() to mint new emissions THIS Thursday
     }
 
@@ -124,7 +112,7 @@ contract MinterUpgradeable is IMinter, OwnableUpgradeable {
 
     // calculate circulating supply as total token supply - locked supply
     function circulating_supply() public view returns (uint) {
-        return _thena.totalSupply() - _thena.balanceOf(address(_ve));
+        return _thena.totalSupply() - _ve.supply();
     }
 
     // emission calculation is 1% of available supply to mint adjusted by circulating / total supply
@@ -142,9 +130,16 @@ contract MinterUpgradeable is IMinter, OwnableUpgradeable {
         return (circulating_supply() * TAIL_EMISSION) / PRECISION;
     }
 
+    // function calculate_emission() public view returns (uint) {
+    //     uint decayFactor = 99 ** ((block.timestamp - active_period) / WEEK); // decay by 1% per week
+    //     uint targetEmission = (weekly * EMISSION) / PRECISION;
+    //     return Math.min(targetEmission * decayFactor, weekly); // decrease weekly emission
+    // }
+
     // calculate inflation and adjust ve balances accordingly
-    function calculate_rebate(uint _weeklyMint) public view returns (uint) {
-        uint _veTotal = _thena.balanceOf(address(_ve));
+    function calculate_rebase(uint _weeklyMint) public view returns (uint) {
+        // TODO: Rebase is 30%
+        uint _veTotal = _ve.supply();
         uint _thenaTotal = _thena.totalSupply();
         
         uint lockedShare = (_veTotal) * PRECISION  / _thenaTotal;
@@ -158,21 +153,22 @@ contract MinterUpgradeable is IMinter, OwnableUpgradeable {
     // update period can only be called once per cycle (1 week)
     function update_period() external returns (uint) {
         uint _period = active_period;
-        if (block.timestamp >= _period + WEEK && _initializer == address(0)) { // only trigger if new week
+        if (block.timestamp >= _period + WEEK && initializer == address(0)) { // only trigger if new week
             _period = (block.timestamp / WEEK) * WEEK;
             active_period = _period;
 
             if(!isFirstMint){
+
                 weekly = weekly_emission();
             } else {
                 isFirstMint = false;
             }
 
-            uint _rebase = calculate_rebate(weekly);
+            uint _rebase = calculate_rebase(weekly);
             uint _teamEmissions = weekly * teamRate / PRECISION;
             uint _required = weekly;
 
-            uint _gauge = weekly - _rebase - _teamEmissions;
+            uint _voterAmount = weekly - _rebase - _teamEmissions;
 
             uint _balanceOf = _thena.balanceOf(address(this));
             if (_balanceOf < _required) {
@@ -185,8 +181,8 @@ contract MinterUpgradeable is IMinter, OwnableUpgradeable {
             _rewards_distributor.checkpoint_token(); // checkpoint token balance that was just minted in rewards distributor
             _rewards_distributor.checkpoint_total_supply(); // checkpoint supply
 
-            _thena.approve(address(_voter), _gauge);
-            _voter.notifyRewardAmount(_gauge);
+            _thena.approve(address(_voter), _voterAmount);
+            _voter.notifyRewardAmount(_voterAmount);
 
             emit Mint(msg.sender, weekly, circulating_supply(), circulating_emission());
         }
@@ -195,14 +191,11 @@ contract MinterUpgradeable is IMinter, OwnableUpgradeable {
 
     function check() external view returns(bool){
         uint _period = active_period;
-        return (block.timestamp >= _period + WEEK && _initializer == address(0));
+        return (block.timestamp >= _period + WEEK && initializer == address(0));
     }
 
     function period() external view returns(uint){
         return(block.timestamp / WEEK) * WEEK;
     }
-    function setRewardDistributor(address _rewardDistro) external {
-        require(msg.sender == team);
-        _rewards_distributor = IRewardsDistributor(_rewardDistro);
-    }
+
 }
