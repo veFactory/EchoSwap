@@ -20,30 +20,36 @@ contract EchoHolders is ERC721Enumerable, Ownable {
     uint256 public MAX_SUPPLY;
     uint256 public NFT_PRICE;
     uint256 public MAX_PER_MINT = 10;
-    uint256 public SALE_START_TIMESTAMP;
     uint256 public MAX_RESERVE = 150;
     uint256 public reservedAmount;
     bytes32 public root;
-    // TODO:Change the multiSig wallet
-    address public multiSig = 0x7d70ee3774325C51e021Af1f7987C214d2CAA184;
 
-    mapping(address => bool) public firstMint;
-    mapping(address => uint256) public secondMint;
-    mapping(address => uint256) public originalMinters;
+    enum Status {
+        PublicSale,
+        PrivateSale1,
+        PrivateSale2,
+        Stop
+    }
+
+    Status public presale;
+
+    mapping(address => uint256) public privateSale1;
+    mapping(address => uint256) public privateSale2;
+    mapping(address => uint256) public publicSale;
 
     constructor(
         uint256 _maxSupply,
-        uint256 _nftPrice,
-        uint256 _startTimestamp
+        uint256 _nftPrice
     ) ERC721("EchoHolders", "EchoNFT") {
         MAX_SUPPLY = _maxSupply;
         NFT_PRICE = _nftPrice;
-        SALE_START_TIMESTAMP = _startTimestamp;
+
+        presale = Status.Stop;
     }
 
-    function withdraw() external onlyOwner {
-        (bool withdrawMultiSig, ) = multiSig.call{value: address(this).balance}("");
-        require(withdrawMultiSig, "Withdraw Failed.");
+    function withdraw(uint _amount) public payable onlyOwner {
+        address payable recipient = payable(msg.sender);
+        recipient.transfer(_amount);
     }
 
     function setRoot(bytes32 _root) external onlyOwner {
@@ -111,48 +117,39 @@ contract EchoHolders is ERC721Enumerable, Ownable {
         return MerkleProof.verify(proof, root, leaf);
     }
 
-    /**
-     * Mint in the first round
-     */
-    function mintFirst(bytes32[] memory proof) public payable {
-        require(block.timestamp >= SALE_START_TIMESTAMP, "Sale has not started yet.");
-        require(block.timestamp < SALE_START_TIMESTAMP + 1 days, "First round has ended.");
-        require(verifyLeaf(proof, msg.sender), "Not whitelisted.");
-        require(NFT_PRICE == msg.value, "BNB value sent is not correct.");
-        require(!firstMint[msg.sender], "Already minted!");
+    function buy(uint256 amount, bytes32[] memory proof) public payable {
+        require(presale != Status.Stop, 'Presale isnt available at this moment');
+        if(presale == Status.PrivateSale1){
+            // Private sale is 5 NFT per wallet and 0.25ETH per NFT
+            require(verifyLeaf(proof, msg.sender), "Not whitelisted.");
+            require(NFT_PRICE.mul(amount) == msg.value, "ETH value sent is not correct");
+            require(privateSale1[msg.sender].add(amount) <= MAX_PER_MINT, "exceed maximum amount");
 
-        firstMint[msg.sender] = true;
-        originalMinters[msg.sender] = 1;
-        _mintTo(msg.sender, 1);
+            privateSale1[msg.sender] = privateSale1[msg.sender].add(amount);
+            _mintTo(msg.sender, amount);
+        }if(presale == Status.PrivateSale2){
+            // Private sale is 10 NFT per wallet and 0.28ETH per NFT
+            require(verifyLeaf(proof, msg.sender), "Not whitelisted.");
+            require(NFT_PRICE.mul(amount) == msg.value, "ETH value sent is not correct");
+            require(privateSale2[msg.sender].add(amount) <= MAX_PER_MINT, "exceed maximum amount");
+
+            privateSale2[msg.sender] = privateSale2[msg.sender].add(amount);
+            _mintTo(msg.sender, amount);
+        }else if(presale == Status.PublicSale){
+            // Public sale is 10 NFT per wallet and 0.3ETH per NFT
+            require(NFT_PRICE.mul(amount) == msg.value, "ETH value sent is not correct");
+            require(publicSale[msg.sender].add(amount) <= MAX_PER_MINT, "exceed maximum amount");
+
+            publicSale[msg.sender] = publicSale[msg.sender].add(amount);
+            _mintTo(msg.sender, amount);
+        }
+
     }
 
-    /**
-     * Mint in the second round
-     */
-    function mintSecond(uint256 amount, bytes32[] memory proof) public payable {
-        require(block.timestamp >= SALE_START_TIMESTAMP + 1 days, "Second round has not started yet.");
-        require(block.timestamp < SALE_START_TIMESTAMP + 2 days, "Second round has ended.");
-        require(verifyLeaf(proof, msg.sender), "Not whitelisted.");
-        require(NFT_PRICE.mul(amount) == msg.value, "BNB value sent is not correct");
-        require(secondMint[msg.sender].add(amount) <= MAX_PER_MINT, "Can only mint 10 in the second round");
-
-        secondMint[msg.sender] = secondMint[msg.sender].add(amount);
-        originalMinters[msg.sender] = originalMinters[msg.sender].add(amount);
-        _mintTo(msg.sender, amount);
-    }
-
-    /**
-     * Mint NFTs
-     */
-    function mintPublic(uint256 amount) public payable {
-        require(block.timestamp >= SALE_START_TIMESTAMP + 2 days, "Public Sale has not started yet.");
-        require(block.timestamp < SALE_START_TIMESTAMP + 5 days, "Sale is over.");
-        require(amount <= MAX_PER_MINT, "Can only mint 10 NFTs at a time");
-        require(balanceOf(msg.sender).add(amount) <= 15, "Can only mint 15 NFTs per wallet");
-        require(NFT_PRICE.mul(amount) == msg.value, "BNB value sent is not correct");
-
-        originalMinters[msg.sender] = originalMinters[msg.sender].add(amount);
-        _mintTo(msg.sender, amount);
+    function updateStatus(uint256 _NFT_PRICE, uint _MAX_PER_MINT, Status _newStatus) public payable onlyOwner {
+        NFT_PRICE = _NFT_PRICE;
+        MAX_PER_MINT = _MAX_PER_MINT;
+        presale = _newStatus;
     }
 
     function _mintTo(address account, uint amount) internal {
